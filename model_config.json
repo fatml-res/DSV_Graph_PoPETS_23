@@ -1,0 +1,109 @@
+{
+  "facebook": {
+    "GAT": {
+      "delta": 0.1,
+      "adj_location": "GAT/CNR/Group/Reduce/Delta=0.1/ind.facebook.adj",
+      "datapath":"GAT/CNR/Group/Reduce/Delta=0.1/",
+      "density_adj_loc": "ptb_with_density/r=0.1/ind.facebook.adj",
+      "dst_partial_path": "GAT/dst/r=0.1/",
+
+      "partial_path": "GAT/",
+      "nhid": 8,
+      "nheads": 8,
+      "lr": 0.004,
+      "train": 0.5,
+      "val": 0.3,
+      "patience": 20,
+      "dropout": 0.5
+    },
+    "GCN": {
+      "delta": 0.05,
+      "adj_location": "GCN/CNR/Group/Reduce/Delta=0.05/ind.facebook.adj",
+      "datapath":"GCN/CNR/Group/Reduce/Delta=0.05/",
+      "density_adj_loc": "ptb_with_density/r=0.1/ind.facebook.adj",
+      "dst_partial_path": "GCN/dst/r=0.1/",
+      "partial_path": "GCN/",
+      "nhid": 32,
+      "lr": 0.001,
+      "train": 0.6,
+      "val": 0.2,
+      "patience": 60,
+      "dropout": 0.5},
+    "GraphSAGE": {
+      "delta": 0
+    },
+    "GraphSAGE": {
+      "delta": 0,
+      "partial_path": "GraphSAGE/",
+      "nhid": 32,
+      "lr": 0.005,
+      "train": 0.6,
+      "val": 0.2,
+      "patience": 20,
+      "dropout": 0.5
+    }
+  },
+  "tagged_40": {
+    "GAT": {
+      "delta": 0,
+      "adj_location": "dataset/tagged/ind.tagged_40.adj",
+      "datapath":"dataset/tagged/",
+      "partial_path": "GAT/",
+      "nhid": 4,
+      "nheads": 4,
+      "lr": 0.005,
+       "train": 0.6,
+      "val": 0.2,
+      "patience": 20,
+      "dropout": 0.6
+  },
+    "GCN": {
+      "delta": 0,
+      "adj_location": "dataset/tagged/ind.tagged_40.adj",
+      "datapath":"dataset/tagged/",
+      "partial_path": "GCN/",
+      "nhid": 20,
+      "lr": 0.005,
+      "train": 0.6,
+      "val": 0.2,
+      "patience": 20,
+      "dropout": 0.5},
+    "GraphSAGE": {
+      "delta": 0
+    }
+  },
+  "pokec":{
+    "GAT": {
+      "delta": 0.1,
+      "adj_location": "GAT/CNR/Group/Reduce/Delta=0.1/ind.pokec.adj",
+      "datapath":"GAT/CNR/Group/Reduce/Delta=0.1/",
+      "density_adj_loc": "ptb_with_density/r=0.1/ind.pokec.adj",
+      "dst_partial_path": "GAT/dst/r=0.1/",
+      "partial_path": "GAT/",
+      "nhid": 6,
+      "nheads": 6,
+      "lr": 0.002,
+      "train": 0.6,
+      "val": 0.2,
+      "patience": 40,
+      "dropout": 0.5
+  },
+    "GCN": {
+      "delta": 0.1,
+      "adj_location": "GCN/CNR/Group/Reduce/Delta=0.1/ind.pokec.adj",
+      "datapath":"GCN/CNR/Group/Reduce/Delta=0.1/",
+      "density_adj_loc": "ptb_with_density/r=4.0/ind.pokec.adj",
+      "dst_partial_path": "GCN/dst/r=4.0/",
+      "partial_path": "GCN/",
+      "nhid": 32,
+      "lr": 0.001,
+      "train": 0.6,
+      "val": 0.2,
+      "patience": 40,
+      "dropout": 0.5
+  },
+    "GraphSAGE": {
+      "delta": 0
+    }
+  }
+}
