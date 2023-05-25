@@ -56,20 +56,14 @@ if __name__ == "__main__":
     model_type = args.model_type  # "gcn"
     dataset = args.dataset  # "cora"
     shadow_dataset = args.shadow_dataset  # "cora"
-    ego_user = args.ego_user  # "107"
     datapath = args.datapath  # "dataset/"
     epoch = args.epoch  # 300
-    lbd = args.lbd
-    gamma = args.gamma
     DP = args.DP
-    Ptb = args.Ptb
-    Ptb_sq = args.Ptb_sq
-    null_model = args.null_model
     DP_con = args.DP_con
     ep = args.ep
     arr = args.arr
-    dst = args.density_change
-    fair_lp = args.fair_adj
+    Min = args.min
+    gamma = args.gamma
 
     run_dense = args.run_dense  # False
     fair_sample = args.fair_sample  # False
@@ -80,29 +74,18 @@ if __name__ == "__main__":
 
     with open('model_config.json', 'r') as f:
         config = json.load(f)[dataset][model_type]
-    delta = config["delta"]
-    adj, ft, gender, labels = load_data(datapath, dataset, ego_user, dropout=0)
+    adj, ft, gender, labels = load_data(datapath, dataset, dropout=0)
 
     MIA_res_addon = ""
-    if delta > 0:
-        adj = pkl.load(open(config["adj_location"], "rb"))
-        MIA_res_addon = "CNR/Group/Reduce/Delta={}/".format(delta)
 
-    if dst:
-        print("load density-changed adj: "+ config['density_adj_loc'])
-        adj = pkl.load(open(config['density_adj_loc'], "rb"))
 
     if run_dense:
         train_model(gender, ft, adj, labels, dataset, num_epoch=epoch, model_type="dense", saving_path="dense")
 
-    if not DP and not Ptb:
+    if not Min:
         target_saving_path = model_type
         partial_path = config["partial_path"]
         attack_res_loc = model_type
-    elif DP:
-        target_saving_path = model_type + "/baseline/lbd={}".format(lbd)
-        partial_path = config["partial_path"] + "baseline/lbd={}/".format(lbd)
-        attack_res_loc = model_type + "/baseline/lbd={}".format(lbd)
     else:
         target_saving_path = model_type + "/M_IN/gamma={}".format(gamma).replace("M_IN", "M_IN(once)" if args.ptb_time==1 else "M_IN").replace("M_IN", "M_IN(multi)" if args.ptb_time==2 else "M_IN")
         partial_path = config["partial_path"] + "M_IN/gamma={}/".format(gamma).replace("M_IN", "M_IN(once)" if args.ptb_time else "M_IN").replace("M_IN", "M_IN(multi)" if args.ptb_time==2 else "M_IN")

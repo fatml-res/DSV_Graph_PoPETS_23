@@ -87,11 +87,9 @@ def sample_mask(idx, l):
     return np.array(mask, dtype=bool)
 
 
-def load_data(datapath_str, dataset_str, ego="107", dropout=0.2):
+def load_data(datapath_str, dataset_str, dropout=0.2):
     if dataset_str in ['facebook']:
-        return load_data_facebook(datapath_str, dataset_str, ego)
-    if dataset_str in ['facebook_ptb']:
-        return load_data_perturb(datapath_str, dataset_str.split('_ptb')[0])
+        return load_data_facebook(datapath_str, dataset_str, "107")
     if "tagged" in dataset_str:
         return load_data_prepared(datapath_str, dataset_str)
     if dataset_str in ["pokec"]:
@@ -265,40 +263,17 @@ def load_data_facebook(datapath_str="dataset/", dataset_str="facebook", ego="107
     # Load target label (circle) circle may not be proper target label, ignore these code
     ft = np.delete(ft, featnames == 'locale', 1)
     ft = torch.FloatTensor(ft)
-    adj = torch.FloatTensor(np.array(adj.todense()))
+    adj = pkl.load(open(datapath_str + dataset_str + '/' + 'ind.facebook.adj', "rb"))
     return adj, ft, np.array(g_list), labels
 
 
-def load_data_perturb(datapath="GAT/CNR/Group/Reduce/Delta=0.2/", dataset="facebook"):
-    names = ['allx', 'ally', 'adj', 'gender']
-    objects = []
-    for i in range(len(names)):
-        with open("{}ind.{}.{}".format(datapath, dataset, names[i]),
-                  'rb') as f:
-            if sys.version_info > (3, 0):
-                objects.append(pkl.load(f, encoding='latin1'))
-            else:
-                objects.append(pkl.load(f))
-
-    allx, ally, adj, gender = tuple(objects)
-
-    features = allx
-
-    labels = ally
-
-    gender = np.array(gender)
-
-    return adj, features, gender, labels
-
-
-def load_data_pokec(datapath_str="dataset/", dataset_str="facebook", dropout=0.2):
+def load_data_pokec(datapath_str="dataset/", dataset_str="pokec", dropout=0.2):
     feat_dir = datapath_str + dataset_str + '/feature_pokec.pt'
-    adj_dir = datapath_str + dataset_str + '/adj_pokec.pt'
     gender_dir = datapath_str + dataset_str + '/gender_pokec.pt'
     label_dir = datapath_str + dataset_str + '/label_pokec.pt'
 
     ft = torch.load(feat_dir)
-    adj = torch.load(adj_dir)
+    adj = pkl.load(open(datapath_str + dataset_str + '/' + 'ind.pokec.adj', "rb"))
     g_list = torch.load(gender_dir)
     labels = torch.load(label_dir)
 
