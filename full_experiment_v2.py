@@ -13,44 +13,19 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--model_type', type=str, default="GAT", help='Model Type, GAT or gcn')
     parser.add_argument('--dataset', type=str, default="facebook", help='dataset, facebook or cora')
-    parser.add_argument('--shadow_dataset', type=str, default="cora", help='shadow dataset, cora')
-    parser.add_argument('--ego_user', type=str, default="107", help='ego user of target dataset')
     parser.add_argument('--datapath', type=str, default="dataset/", help='datapath for original data')
     parser.add_argument('--epoch', type=int, default=300, help='number of epoch')
-    parser.add_argument('--lbd', type=float, default=0, help='lambda for baseline')
     parser.add_argument('--gamma', type=float, default=math.inf, help='gamma for M-IN')
-    parser.add_argument('--ep', type=float, default=0, help='epsilon for conventional DP')
-    parser.add_argument('--DP', action="store_true", default=False,
-                        help='True if baseline experiment is running')
-    parser.add_argument('--Ptb', action="store_true", default=False,
+    parser.add_argument('--Min', action="store_true", default=False,
                         help='True if M-In experiment is running.')
-    parser.add_argument('--Ptb_sq', action="store_true", default=False,
-                        help='True if M-In-sq experiment is running.')
-    parser.add_argument('--density_change', action="store_true", default=False,
-                        help='True if use density modified graph.')
-    parser.add_argument('--fair_adj', action="store_true", default=False,
-                        help='True if run with M-Pre.')
 
     parser.add_argument('--run_dense', action="store_true", default=False, help='True if dense experiment is required.')
-    parser.add_argument('--fair_sample', action="store_true", default=False,
-                        help='True if fair sample for MIA is required')
     parser.add_argument('--run_attack', action="store_true", default=False,
                         help='True if attack experiment is required.')
-    parser.add_argument('--prepare_new', action="store_true", default=False,
-                        help='True if prepare new attack input files')
     parser.add_argument('--run_Target', action="store_true", default=False,
                         help='True if Target experiment is required.')
     parser.add_argument('--run_partial', action="store_true", default=False,
                         help='True if new partial data is required.')
-    parser.add_argument('--null_model', action="store_true", default=False,
-                        help='True if run null_model experiment')
-    parser.add_argument('--DP_con', action="store_true", default=False,
-                        help='True if run conventional DP experiment')
-    parser.add_argument('--arr', action="store_true", default=False,
-                        help='True if run ARR experiment')
-    parser.add_argument('--ptb_time', type=float, default=-1,
-                        help='positive if only one time ptb')
-
     args = parser.parse_args()
 
     model_type = args.model_type  # "gcn"
@@ -58,17 +33,12 @@ if __name__ == "__main__":
     shadow_dataset = args.shadow_dataset  # "cora"
     datapath = args.datapath  # "dataset/"
     epoch = args.epoch  # 300
-    DP = args.DP
-    DP_con = args.DP_con
-    ep = args.ep
-    arr = args.arr
     Min = args.min
     gamma = args.gamma
 
     run_dense = args.run_dense  # False
     fair_sample = args.fair_sample  # False
     run_attack = args.run_attack  # False
-    prepare_new = args.prepare_new  # True
     run_Target = args.run_Target  # False
     run_partial = args.run_partial  # True
 
@@ -87,48 +57,9 @@ if __name__ == "__main__":
         partial_path = config["partial_path"]
         attack_res_loc = model_type
     else:
-        target_saving_path = model_type + "/M_IN/gamma={}".format(gamma).replace("M_IN", "M_IN(once)" if args.ptb_time==1 else "M_IN").replace("M_IN", "M_IN(multi)" if args.ptb_time==2 else "M_IN")
-        partial_path = config["partial_path"] + "M_IN/gamma={}/".format(gamma).replace("M_IN", "M_IN(once)" if args.ptb_time else "M_IN").replace("M_IN", "M_IN(multi)" if args.ptb_time==2 else "M_IN")
-        attack_res_loc = model_type + "/M_IN/gamma={}".format(gamma).replace("M_IN", "M_IN(once)" if args.ptb_time else "M_IN").replace("M_IN", "M_IN(multi)" if args.ptb_time==2 else "M_IN")
-    if arr:
-        target_saving_path = model_type + "/ARR/epsilon={}".format(ep)
-        partial_path = config["partial_path"] + "ARR/epsilon={}/".format(ep)
-        attack_res_loc = model_type + "/ARR/epsilon={}".format(ep)
-
-    if DP_con:
-        target_saving_path = model_type + "/DP_con/ep={}_bs={}".format(ep, 100 if model_type == "GAT" else 20)
-        partial_path = model_type + "/DP_con/ep={}/".format(ep)
-        attack_res_loc = model_type + "/DP_con/ep={}".format(ep)
-
-    if dst and not Ptb and not arr and not DP_con:
-        print("density changed with no defense")
-        target_saving_path = config["dst_partial_path"]
-        partial_path = config["dst_partial_path"]
-        attack_res_loc = config["dst_partial_path"]
-    elif dst and Ptb:
-        target_saving_path = config["dst_partial_path"] + "M_IN/gamma={}/".format(gamma)
-        partial_path = config["dst_partial_path"] + "M_IN/gamma={}/".format(gamma)
-        attack_res_loc = config["dst_partial_path"] + "/M_IN/gamma={}".format(gamma)
-    elif dst and arr:
-        target_saving_path = config["dst_partial_path"] + 'ARR/epsilon={}'.format(ep)
-        partial_path = config["dst_partial_path"] + "ARR/epsilon={}/".format(ep)
-        attack_res_loc =config["dst_partial_path"] + "/ARR/epsilon={}".format(ep)
-    elif DP_con and dst:
-        target_saving_path = config["dst_partial_path"] + "/DP_con/ep={}_bs={}".format(ep, 100 if model_type == "GAT" else 20)
-        partial_path = config["dst_partial_path"] + "/DP_con/ep={}/".format(ep)
-        attack_res_loc = config["dst_partial_path"] + "/DP_con/ep={}".format(ep)
-
-    if null_model:
-        target_saving_path = "Null_model"
-        partial_path = "Null_model/{}/".format(model_type)
-        attack_res_loc = "Null_model/" + model_type
-
-    if fair_lp:
-        print("Running fair_LP")
-        #adj = pkl.load(open(model_type + "/fair_adj/ind.{}.adj".format(dataset), "rb"))
-        target_saving_path = model_type + "/M_pre/"
-        partial_path = config["partial_path"] + "/M_pre/"
-        attack_res_loc = model_type + "/M_pre"
+        target_saving_path = model_type + "/M_IN/gamma={}".format(gamma)
+        partial_path = config["partial_path"] + "M_IN/gamma={}/".format(gamma)
+        attack_res_loc = model_type + "/M_IN/gamma={}".format(gamma)
 
     for locs in [target_saving_path, partial_path, attack_res_loc]:
         if not os.path.exists(locs):
@@ -136,9 +67,8 @@ if __name__ == "__main__":
 
     if run_Target:
         run_target(model_type, config, gender, ft, adj, labels,
-                   DP=DP, lbd=lbd, Ptb=Ptb, gamma=gamma,
-                   epochs=epoch, dataset=dataset, saving_path=target_saving_path,
-                   null_model=null_model, ARR=arr, epsilon=ep, mpre=fair_lp, ptb_sq=Ptb_sq, ptb_time=args.ptb_time)
+                   Min=Min, gamma=gamma,
+                   epochs=epoch, dataset=dataset, saving_path=target_saving_path)
 
     df_acc = []
     partial_done = False
