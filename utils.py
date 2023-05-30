@@ -9,8 +9,6 @@ import pandas as pd
 import os
 from igraph import *
 import torch
-import glob
-from scipy.sparse import csr_matrix
 
 
 def one_hot_trans(labels):

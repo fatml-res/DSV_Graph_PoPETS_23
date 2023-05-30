@@ -340,23 +340,12 @@ def run_GAT(gender, ft_ori, adj, labels, epochs, dataset="facebook", saving_path
 
 if __name__ == "__main__":
     datapath = "dataset/"
-    dataset = "tagged_40"
+    dataset = "facebook"
     ego_user = "107"
-    delta = 0
     adj, ft, gender, labels = load_data(datapath, dataset, ego_user, dropout=0)
-    if delta > 0:
-        adj = pkl.load(open("{}/CNR/Group/Reduce/Delta={}/ind.{}.adj".format("GAT", delta, dataset), "rb"))
-    acc_lists = []
-    for t in range(5):
-        tmp_list = run_GAT(gender, ft, adj, labels, epochs=200, dataset=dataset, DP=False,
-                           saving_path="GAT/DP/nodp/t={}".format(t))
-        acc_lists.append(tmp_list)
-    acc_lists = np.array(acc_lists)
-    df_acc = pd.DataFrame(acc_lists, columns=["epsilon", "train acc", "train acc 1", "train acc 2",
-                                              "test acc", "test acc 1", "test acc 2"])
-    df_acc_avg = df_acc.groupby(["epsilon"]).mean()
-    df_acc_avg.to_csv("GAT/DP/target_acc_agg.csv")
-    pass
+    tmp_list = run_GAT(gender, ft, adj, labels,
+                       epochs=200, dataset=dataset,
+                       saving_path="GAT/")
 
 
 

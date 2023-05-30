@@ -3,7 +3,6 @@ import torch
 from sklearn.preprocessing import StandardScaler
 from pyGAT.models import GAT
 from pygcn.models import GCN
-from graphsage.model import init_GraphSAGE
 from torch import optim
 import time
 import pickle as pkl
@@ -15,34 +14,9 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score
 from torch.autograd import Variable
 
 
-def ARR_matrix(adj, ep):
-    print("preprocess matrix with ARR! epsilon={}".format(ep))
-    N1 = adj.sum()
-    N2 = adj.shape[0]**2 - N1
-    #mu = torch.exp(torch.Tensor([ep]))/(torch.exp(torch.Tensor([ep]))+1)
-    #rho = torch.exp(torch.Tensor([-ep]))
-    #mu = N1 / (N1 + N2 * rho)
-    p1 = 1 / (1+torch.exp(torch.tensor([ep])))
-    p2 = p1
-    prob = adj * (1-p1) + (1 - adj) * p2
-    adj_ptb = torch.bernoulli(prob)
-
-    #clip with d max
-    dmax=N1 // adj.shape[0]
-    cliped_pos = torch.multinomial(adj_ptb, int(dmax))
-    adj_final = torch.zeros_like(adj_ptb)
-    for i in range(adj_ptb.shape[0]):
-        adj_final[i, cliped_pos[i]] = 1
-    adj_utri = torch.triu(adj_final)
-    adj_ltri = torch.flip(torch.triu(adj_final, diagonal=1), [0,1])
-    adj_final = adj_utri + adj_ltri
-    return adj_final
-
-
-
 def run_target(model_type, config, gender, ft, adj, labels,
                epochs, dataset="facebook", saving_path="GAT",
-               Min=False, gamma=torch.inf):
+               FairDefense=False, gamma=torch.inf):
 
     if len(labels.shape) > 1:
         if torch.is_tensor(labels):
@@ -84,17 +58,15 @@ def run_target(model_type, config, gender, ft, adj, labels,
                     nclass=labels.max().item() + 1,
                     dropout=dropout,
                     nhead=nheads,
-                    Min=Ptb,
+                    Min=FairDefense,
                     gamma=gamma)
-    elif model_type == "GCN":
+    else:
         model = GCN(nfeat=ft.shape[1],
                     nhid=nhid,
                     nclass=int(labels.max().item() + 1),
                     dropout=dropout,
-                    Min=Ptb,
+                    Min=FairDefense,
                     gamma=gamma)
-    else:
-        model, enc1, enc2 = init_GraphSAGE(ft, adj, labels.max().item() + 1)
 
     def train(epoch):
         adj_copy = adj
@@ -268,5 +240,4 @@ if __name__ == "__main__":
     ft = torch.FloatTensor(ss.fit_transform(ft))
 
     MIA_res_addon = ""
-    run_target(model_type, config, gender, ft, adj, labels, epochs=epoch, dataset=dataset, saving_path=model_type,
-               ARR=True, epsilon=1.0)
+    run_target(model_type, config, gender, ft, adj, labels, epochs=epoch, dataset=dataset, saving_path=model_type)

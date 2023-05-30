@@ -14,18 +14,6 @@ tf.enable_eager_execution()
 flags = tf.app.flags
 FLAGS = flags.FLAGS # "data/dataset/walk2friends"
 from sklearn.metrics import accuracy_score, precision_score, recall_score
-#flags.DEFINE_string("prediction_path", model_type + "/", "model prediction path")
-#flags.DEFINE_string('model', model_type,
-#                        'Model string.')  # 'gcn', 'gcn_cheby', 'dense'
-# flags.DEFINE_float('learning_rate', 0.01, 'Initial learning rate.')
-#flags.DEFINE_integer('epochs', num_epoch, 'Number of epochs to train.')
-# flags.DEFINE_integer('hidden1', 16, 'Number of units in hidden layer 1.')
-# flags.DEFINE_float('dropout', 0.5, 'Dropout rate (1 - keep probability).')
-# flags.DEFINE_float('weight_decay', 5e-4,
-#                       'Weight for L2 loss on embedding matrix.')
-#flags.DEFINE_integer('early_stopping', 10,
-#                         'Tolerance for early stopping (# of epochs).')
-#flags.DEFINE_integer('max_degree', 3, 'Maximum Chebyshev polynomial degree.')
 
 
 def train_model(gender, ft, adj, labels, dataset, num_epoch, model_type, saving_path="gcn"):
@@ -200,27 +188,9 @@ def train_model(gender, ft, adj, labels, dataset, num_epoch, model_type, saving_
         acc_list = [train_acc, train_g1_acc, train_g2_acc, test_acc, test_g1_acc, test_g2_acc]
     else:
         acc_list = [train_acc, train_acc, train_acc, test_acc, test_acc, test_acc]
-
-
     if not os.path.exists(saving_path):
         os.makedirs(saving_path)
-
-    '''with open('{}/ind.{}.allx'.format(saving_path, dataset), 'wb') as f:
-        pkl.dump(ft, f)
-
-    with open('{}/ind.{}.ally'.format(saving_path, dataset), 'wb') as f:
-        pkl.dump(labels, f)
-
-    with open('{}/ind.{}.adj'.format(saving_path, dataset), 'wb') as f:
-        if adj.is_sparse:
-            adj = adj.to_dense()
-        pkl.dump(1 * (adj > 0), f)
-
-    with open('{}/ind.{}.gender'.format(saving_path, dataset), 'wb') as f:
-        pkl.dump(gender, f)'''
-
     with open('{}/{}_{}_pred.pkl'.format(saving_path, dataset, model_type), 'wb') as f:
         pkl.dump(test_pred, f)
-
     with open('{}/{}_gcn_acc.pkl'.format(saving_path, dataset), 'wb') as f:
         pkl.dump(acc_list, f)

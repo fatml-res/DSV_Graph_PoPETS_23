@@ -118,67 +118,15 @@ def run_GCN(gender, ft, adj, labels, epochs, ego='', dataset="facebook", saving_
 
         return loss_val.data.item()
 
-    def train_dp(epoch, sigma):
-        t = time.time()
-        C = 1
-        model.train()
-        epoch_ids = torch.randperm(idx_train.nelement())
-        number_of_batch = math.floor(len(idx_train)/batch_size)
-
-        for batch in range(number_of_batch):
-            idx_batch = idx_train[epoch_ids[batch * batch_size: (batch + 1) * batch_size]]
-            output = model(ft, adj)
-            loss = F.nll_loss(output[idx_batch], labels[idx_batch])
-            optimizer.zero_grad()
-            grads = [torch.zeros(p.shape) for p in model.parameters()]
-            igrad = torch.autograd.grad(loss, model.parameters(), retain_graph=True)
-            l2_norm = torch.tensor(0.0)
-            for g in igrad:
-                l2_norm += g.norm(2) ** 2
-            l2_norm = l2_norm.sqrt()
-            divisor = max(torch.tensor(1.0), l2_norm / C)
-            for i in range(len(igrad)):
-                grads[i] += igrad[i] / divisor
-            for i in range(len(grads)):
-                grads[i] += sigma * C * (torch.randn_like(grads[i]))
-                # grads[i] /= np.shape(iword)[0]
-                grads[i].detach_()
-
-            p_list = [p for p in model.parameters()]
-            for i in range(len(p_list)):
-                p_list[i].grad = grads[i]
-                p_list[i].grad.detach_()
-
-            loss.backward()
-            optimizer.step()
-
-        model.eval()
-        output = model(ft, adj)
-        loss_train = F.nll_loss(output[idx_train], labels[idx_train])
-        acc_train = accuracy(output[idx_train], labels[idx_train])
-
-        loss_val = F.nll_loss(output[idx_val], labels[idx_val])
-        acc_val = accuracy(output[idx_val], labels[idx_val])
-        print('Epoch: {:04d}'.format(epoch + 1),
-              'loss_train: {:.4f}'.format(loss_train.data.item()),
-              'acc_train: {:.4f}'.format(acc_train.data.item()),
-              'loss_val: {:.4f}'.format(loss_val.data.item()),
-              'acc_val: {:.4f}'.format(acc_val.data.item()),
-              'time: {:.4f}s'.format(time.time() - t))
-        return loss_val.data.item()
-
     loss_values = []
     bad_counter = 0
     best = epochs + 1
     best_epoch = 0
 
     for epoch in range(epochs):
-        if DP:
-            loss_values.append(train_dp(epoch, sigma=sigma))
-        else:
-            loss_values.append(train(epoch))
+        loss_values.append(train(epoch))
 
-        torch.save(model.state_dict(), 'gcn/{}.pkl'.format(epoch))
+        torch.save(model.state_dict(), 'GCN/{}.pkl'.format(epoch))
         if loss_values[-1] < best:
             best = loss_values[-1]
             best_epoch = epoch
@@ -189,14 +137,14 @@ def run_GCN(gender, ft, adj, labels, epochs, ego='', dataset="facebook", saving_
         if bad_counter == patience and not DP:
             break
 
-        files = glob.glob('gcn/[0-9]*.pkl')
+        files = glob.glob('GCN/[0-9]*.pkl')
         for file in files:
             file = file.replace('\\', '/')
             epoch_nb = int(file.split('.')[0].split('/')[1])
             if epoch_nb < best_epoch:
                 os.remove(file)
 
-    files = glob.glob('gcn/[0-9]*.pkl')
+    files = glob.glob('GCN/[0-9]*.pkl')
     for file in files:
         file = file.replace('\\', '/')
         epoch_nb = int(file.split('.')[0].split('/')[1])
@@ -311,10 +259,7 @@ def run_GCN(gender, ft, adj, labels, epochs, ego='', dataset="facebook", saving_
 
     with open('{}/ind.{}.gender'.format(saving_path, dataset), 'wb') as f:
         pkl.dump(gender, f)
-    if not DP:
-        return np.array([-1] + acc_list)
-    else:
-        return np.array([epsilon] + acc_list)
+    return np.array([epsilon] + acc_list)
 
 
 if __name__ == "__main__":
@@ -322,31 +267,5 @@ if __name__ == "__main__":
     dataset = "facebook"
     ego_user = "107"
     adj, ft, gender, labels = load_data(datapath, dataset, ego_user, dropout=0)
-    delta = 0.05
-    adj = pkl.load(open("{}/CNR/Group/Reduce/Delta={}/ind.{}.adj".format("gcn", delta, dataset), "rb"))
-    acc_lists = []
-    for t in range(5):
-        tmp_list = run_GCN(gender, ft, adj, labels, epochs=50, dataset=dataset, DP=False,
-                           saving_path="gcn/DP/nodp/t={}".format(t))
-        acc_lists.append(tmp_list)
-    for epsilon in [5.0, 3.0, 1.0, 0.5, 0.1]:
-        for t in range(5):
-            tmp_list = [0, 0]
-            count = 0
-            while tmp_list[1] < 0.35 and count < 5:
-                count += 1
-                print("Try {} time for epsilon={}".format(count, epsilon))
-                tmp_list = run_GCN(gender, ft, adj, labels, epochs=50, dataset=dataset,
-                                   DP=True, epsilon=epsilon, saving_path="gcn/DP/ep={}/t={}".format(epsilon, t))
-            if tmp_list[1] > 0.30:
-                acc_lists.append(tmp_list)
-            else:
-                print("Target model with DP failed for epsilon={} and t={} for {} times".format(epsilon, t, count))
-
-
-    acc_lists = np.array(acc_lists)
-    df_acc = pd.DataFrame(acc_lists, columns=["epsilon", "train acc", "train acc 1", "train acc 2",
-                                              "test acc", "test acc 1", "test acc 2"])
-    df_acc_avg = df_acc.groupby(["epsilon"]).mean()
-    df_acc_avg.to_csv("gcn/DP/target_acc_agg.csv")
-    pass
+    res_list = run_GCN(gender, ft, adj, labels, epochs=50, dataset=dataset,
+                     saving_path="GCN/")

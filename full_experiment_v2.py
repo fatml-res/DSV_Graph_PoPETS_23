@@ -11,13 +11,13 @@ import math
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--model_type', type=str, default="GAT", help='Model Type, GAT or gcn')
-    parser.add_argument('--dataset', type=str, default="facebook", help='dataset, facebook or cora')
+    parser.add_argument('--model_type', type=str, default="GAT", help='Model Type, GAT or GCN')
+    parser.add_argument('--dataset', type=str, default="facebook", help='dataset, facebook or pokec')
     parser.add_argument('--datapath', type=str, default="dataset/", help='datapath for original data')
     parser.add_argument('--epoch', type=int, default=300, help='number of epoch')
-    parser.add_argument('--gamma', type=float, default=math.inf, help='gamma for M-IN')
-    parser.add_argument('--Min', action="store_true", default=False,
-                        help='True if M-In experiment is running.')
+    parser.add_argument('--gamma', type=float, default=math.inf, help='gamma for FairDefense')
+    parser.add_argument('--FD', action="store_true", default=False,
+                        help='True if FairDefense experiment is running.')
 
     parser.add_argument('--run_dense', action="store_true", default=False, help='True if dense experiment is required.')
     parser.add_argument('--run_attack', action="store_true", default=False,
@@ -28,12 +28,12 @@ if __name__ == "__main__":
                         help='True if new partial data is required.')
     args = parser.parse_args()
 
-    model_type = args.model_type  # "gcn"
-    dataset = args.dataset  # "cora"
-    shadow_dataset = args.shadow_dataset  # "cora"
+    model_type = args.model_type  # "GCN"
+    dataset = args.dataset  # "facebook"
+    shadow_dataset = args.shadow_dataset  # "facebook"
     datapath = args.datapath  # "dataset/"
     epoch = args.epoch  # 300
-    Min = args.min
+    FairDefense = args.FD
     gamma = args.gamma
 
     run_dense = args.run_dense  # False
@@ -48,11 +48,10 @@ if __name__ == "__main__":
 
     MIA_res_addon = ""
 
-
     if run_dense:
         train_model(gender, ft, adj, labels, dataset, num_epoch=epoch, model_type="dense", saving_path="dense")
 
-    if not Min:
+    if not FairDefense:
         target_saving_path = model_type
         partial_path = config["partial_path"]
         attack_res_loc = model_type
@@ -67,7 +66,7 @@ if __name__ == "__main__":
 
     if run_Target:
         run_target(model_type, config, gender, ft, adj, labels,
-                   Min=Min, gamma=gamma,
+                   FairDefense=FairDefense, gamma=gamma,
                    epochs=epoch, dataset=dataset, saving_path=target_saving_path)
 
     df_acc = []
@@ -108,17 +107,3 @@ if __name__ == "__main__":
                                r_all / (t + 1),
                                roc_all / (t + 1)))
         agg_all.append([at, a_all / (t + 1), p_all / (t + 1), r_all / (t + 1), roc_all / (t + 1)])
-
-    df_acc = pd.DataFrame(df_acc, columns=["Attack",
-                                           "Acc_train", "Acc_train1", "Acc_train2", "Acc_train0",
-                                           "Acc_test", "Acc_test1", "Acc_test2", "Acc_test0"])
-    df_acc_agg = df_acc.groupby("Attack").mean()
-    df_agg_performance = pd.DataFrame(agg_all, columns=["Attack Type", "Accuracy", "Precision", "Recall", "AUC"])
-
-    if run_attack:
-        df_acc_agg.to_csv(
-            "{}/MIA_res/{}_attack{}acc_agg.csv".format(attack_res_loc, dataset, "_fair_" if fair_sample else "_"))
-        df_acc.to_csv(
-            "{}/MIA_res/{}_attack{}acc.csv".format(attack_res_loc, dataset, "_fair_" if fair_sample else "_"))
-        df_agg_performance.to_csv(
-            "{}/MIA_res/{}_attack{}performance.csv".format(attack_res_loc, dataset, "_fair_" if fair_sample else "_"))

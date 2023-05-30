@@ -3,12 +3,12 @@ import os
 import numpy as np
 import pandas as pd
 import torch
-from stealing_link.utils import *
+from utils import *
 import pickle as pkl
 import json
 import random
 import time
-from attack import operator_func, get_metrics
+from ..attack import operator_func, get_metrics
 from scipy.spatial.distance import cosine, euclidean, correlation, chebyshev,\
     braycurtis, canberra, cityblock, sqeuclidean
 from sklearn.model_selection import train_test_split
@@ -85,313 +85,43 @@ def top_k_post(post, k):
 
 def generate_train_test(link, unlink, dense_pred, gcn_pred, train_ratio,
                         feature_arr, dataset, saving_path="GAT/partial/",
-                        g_link=[], g_unlink=[], fair_sample=False, topk=-1):
-    train = []
-    test = []
-    train_len = len(link) * train_ratio
-    ind_link = np.arange(len(link))
-    ind_unlink = np.arange(len(unlink))
-    np.random.shuffle(ind_link)
-    np.random.shuffle(ind_unlink)
-    if fair_sample:
-        groups, link_groups_lens = np.unique(g_link, return_counts=True)
-        if min(link_groups_lens) < train_len//3:
-            print("Training rate is too large for fair sampling")
-            print("Training set is reduced from {} to {}".format(train_len, min(link_groups_lens)//2 * 3))
-            train_len = min(link_groups_lens)//2 * 3
-
-    count_g = [0, 0, 0]
-    diff_list = []
-    # links
-    for i in ind_link:
-
-        link_id0 = link[i][0]
-        link_id1 = link[i][1]
-        gi = g_link[i]
-        line_link = {
-            'label': 1,
-            'gcn_pred0': gcn_pred[link_id0] if not topk else top_k_post(gcn_pred[link_id0], topk),
-            'gcn_pred1': gcn_pred[link_id1] if not topk else top_k_post(gcn_pred[link_id1], topk),
-            "dense_pred0": dense_pred[link_id0],
-            "dense_pred1": dense_pred[link_id1],
-            "feature_arr0": feature_arr[link_id0],
-            "feature_arr1": feature_arr[link_id1],
-            "id_pair": [int(link_id0), int(link_id1)],
-            "gender_group": gi
-            }
-        diff = get_diff(line_link, 1, gender=gi)
-        diff_list.append(diff)
-
-
-
-        if fair_sample:
-            if count_g[gi] < train_len//3:
-                train.append(line_link)
-                count_g[gi] += 1
-            else:
-                test.append(line_link)
-        else:
-            if len(train) < train_len:
-                train.append(line_link)
-            else:
-                test.append(line_link)
-
-    # unlinks
-    for i in ind_unlink:
-        unlink_id0 = unlink[i][0]
-        unlink_id1 = unlink[i][1]
-        gi = g_unlink[i]
-
-        line_unlink = {
-            'label': 0,
-            'gcn_pred0': gcn_pred[unlink_id0] if not topk else top_k_post(gcn_pred[unlink_id0], topk),
-            'gcn_pred1': gcn_pred[unlink_id1] if not topk else top_k_post(gcn_pred[unlink_id1], topk),
-            "dense_pred0": dense_pred[unlink_id0],
-            "dense_pred1": dense_pred[unlink_id1],
-            "feature_arr0": feature_arr[unlink_id0],
-            "feature_arr1": feature_arr[unlink_id1],
-            "id_pair": [int(unlink_id0), int(unlink_id1)],
-            "gender_group": gi
-        }
-        diff = get_diff(line_unlink, 0,  gender=gi)
-        diff_list.append(diff)
-        if fair_sample:
-            if count_g[gi] < 2 * train_len // 3:
-                train.append(line_unlink)
-                count_g[gi] += 1
-            else:
-                test.append(line_unlink)
-        else:
-            if len(train) < 2 * train_len:
-                train.append(line_unlink)
-            else:
-                test.append(line_unlink)
-    if not os.path.exists(saving_path):
-        os.makedirs(saving_path)
-    diff_list = pd.DataFrame(np.array(diff_list))
-
-    if fair_sample:
-        diff_file = saving_path + "diff_%s_train_ratio_%0.1f_train_fair.csv" % (dataset, train_ratio)
-        partial_train_file = saving_path + "%s_train_ratio_%0.1f_train_fair.json" % (dataset, train_ratio)
-        partial_test_file = saving_path + "%s_train_ratio_%0.1f_test_fair.json" % (dataset, train_ratio)
-    else:
-        diff_file = saving_path + "diff_%s_train_ratio_%0.1f_train.csv" % (dataset, train_ratio)
-        partial_train_file = saving_path + "%s_train_ratio_%0.1f_train.json" % (dataset, train_ratio)
-        partial_test_file = saving_path + "%s_train_ratio_%0.1f_test.json" % (dataset, train_ratio)
-    diff_list.to_csv(diff_file, index=False, header=False)
-    with open(partial_train_file, "w") as wf1, open(partial_test_file, "w") as wf2:
-        for row in train:
-            wf1.write("%s\n" % json.dumps(row))
-        for row in test:
-            wf2.write("%s\n" % json.dumps(row))
-
-
-def generate_train_test_v2(link, unlink, dense_pred, gcn_pred, train_ratio,
-                        feature_arr, dataset, saving_path="GAT/partial/",
-                        g_link=[], g_unlink=[], fair_sample=False, topk=-1):
-    train = []
-    test = []
-    train_len = len(link) * train_ratio
-    ind_link = np.arange(len(link))
-    ind_unlink = np.arange(len(unlink))
-    np.random.shuffle(ind_link)
-    np.random.shuffle(ind_unlink)
-    if fair_sample:
-        groups, link_groups_lens = np.unique(g_link, return_counts=True)
-        if min(link_groups_lens) < train_len//3:
-            print("Training rate is too large for fair sampling")
-            print("Training set is reduced from {} to {}".format(train_len, min(link_groups_lens)//2 * 3))
-            train_len = min(link_groups_lens)//2 * 3
-
-    count_g = [0, 0, 0]
-    diff_list = []
-    # links
-    df_columns = []
-    for i in ind_link:
-
-        link_id0 = link[i][0]
-        link_id1 = link[i][1]
-        gi = g_link[i]
-        link_contents = [1,
-                         gcn_pred[link_id0] if not topk else top_k_post(gcn_pred[link_id0], topk),
-                         gcn_pred[link_id1] if not topk else top_k_post(gcn_pred[link_id1], topk),
-                         dense_pred[link_id0],
-                         dense_pred[link_id1],
-                         feature_arr[link_id0],
-                         feature_arr[link_id1],
-                         int(link_id0),
-                         int(link_id1),
-                         gi]
-        line_row = np.concatenate(link_contents, axis=None)
-        content_names = ['label',
-                         'gcn_pred0',
-                         'gcn_pred1',
-                         "dense_pred0",
-                         "dense_pred1",
-                         "feature_arr0",
-                         "feature_arr1",
-                         "id_node0",
-                         "id_node1",
-                         "gender_group"]
-        if len(df_columns) == 0:
-            for i in range(len(content_names)):
-                try:
-                    len_content = len(link_contents[i])
-                    df_columns += ['{}_{}'.format(content_names[i], x) for x in range(len_content)]
-                except:
-                    df_columns.append(content_names[i])
-
-        diff = get_diff_v2(link_contents, 1, gender=gi)
-        diff_list.append(diff)
-
-        if fair_sample:
-            if count_g[gi] < train_len//3:
-                train.append(line_row)
-                count_g[gi] += 1
-            else:
-                test.append(line_row)
-        else:
-            if len(train) < train_len:
-                train.append(line_row)
-            else:
-                test.append(line_row)
-
-    # unlinks
-    for i in ind_unlink:
-        unlink_id0 = unlink[i][0]
-        unlink_id1 = unlink[i][1]
-        gi = g_unlink[i]
-
-        link_contents = [0,
-                         gcn_pred[unlink_id0] if not topk else top_k_post(gcn_pred[unlink_id0], topk),
-                         gcn_pred[unlink_id1] if not topk else top_k_post(gcn_pred[unlink_id1], topk),
-                         dense_pred[unlink_id0],
-                         dense_pred[unlink_id1],
-                         feature_arr[unlink_id0],
-                         feature_arr[unlink_id1],
-                         int(unlink_id0),
-                         int(unlink_id1),
-                         gi]
-        line_row = np.concatenate(link_contents, axis=None)
-        diff = get_diff_v2(link_contents, 0,  gender=gi)
-        diff_list.append(diff)
-        if fair_sample:
-            if count_g[gi] < 2 * train_len // 3:
-                train.append(line_row)
-                count_g[gi] += 1
-            else:
-                test.append(line_row)
-        else:
-            if len(train) < 2 * train_len:
-                train.append(line_row)
-            else:
-                test.append(line_row)
-    if not os.path.exists(saving_path):
-        os.makedirs(saving_path)
-    diff_list = pd.DataFrame(np.array(diff_list))
-    train_df = pd.DataFrame(np.array(train), columns=df_columns)
-    test_df = pd.DataFrame(np.array(test), columns=df_columns)
-
-    if fair_sample:
-        diff_file = saving_path + "diff_%s_train_ratio_%0.1f_train_fair.csv" % (dataset, train_ratio)
-        partial_train_file = saving_path + "%s_train_ratio_%0.1f_train_fair.csv" % (dataset, train_ratio)
-        partial_test_file = saving_path + "%s_train_ratio_%0.1f_test_fair.csv" % (dataset, train_ratio)
-    else:
-        diff_file = saving_path + "diff_%s_train_ratio_%0.1f_train.csv" % (dataset, train_ratio)
-        partial_train_file = saving_path + "%s_train_ratio_%0.1f_train.csv" % (dataset, train_ratio)
-        partial_test_file = saving_path + "%s_train_ratio_%0.1f_test.csv" % (dataset, train_ratio)
-    diff_list.to_csv(diff_file, index=False, header=False)
-    train_df.to_csv(partial_train_file, index=False)
-    test_df.to_csv(partial_test_file, index=False)
-
-
-def generate_train_test_v3(link, unlink, dense_pred, gcn_pred, train_ratio,
-                        feature_arr, dataset, saving_path="GAT/partial/",
-                        g_link=[], g_unlink=[], fair_sample=False, topk=-1):
+                        g_link=[], g_unlink=[]):
     train_len = max(len(link) * train_ratio, 1)
-    if fair_sample:
-        groups, link_groups_lens = np.unique(g_link, return_counts=True)
-        if min(link_groups_lens) < train_len//3:
-            print("Training rate is too large for fair sampling")
-            print("The minimum group size is only {} compared with required {}".format(min(link_groups_lens),
+    groups, link_groups_lens = np.unique(g_link, return_counts=True)
+    if min(link_groups_lens) < train_len//3:
+        print("Training rate is too large for fair sampling")
+        print("The minimum group size is only {} compared with required {}".format(min(link_groups_lens),
                                                                                        train_len//3))
-            print("Apply inplace sampling")
+        print("Apply inplace sampling")
 
     diff_list = []
     df_columns = []
-    if fair_sample:
-        # fair sample option:
-        for member in range(2):
-            link_or_unlink = link if not member else unlink
-            g_link_or_unlink = g_link if not member else g_unlink
-            ind_link = np.array(range(len(link_or_unlink)))
-            for g in range(3):
-                print("working on group {}-{}".format(g, "member" if not member else "non-member"))
-                ind_current_group = ind_link[np.array(g_link_or_unlink) == g]
-                if len(ind_current_group) < train_len//3:
-                    ind_sample_g_test, ind_sample_g_train = train_test_split(ind_current_group, test_size=0.5)
-                    ind_sample_g_test = np.random.choice(ind_sample_g_test, int(train_len//3))
-                    ind_sample_g_train = np.random.choice(ind_sample_g_train, int(train_len//3))
-                else:
-                    ind_sample_g_test, ind_sample_g_train = train_test_split(ind_current_group, test_size=int(train_len//3))
-                ind_sample_g = np.concatenate([ind_sample_g_train, ind_sample_g_test])
-                labels = np.ones([len(ind_sample_g), 1]) * (1 - member)
-                gcn0 = np.array(gcn_pred)[np.array(link_or_unlink)[ind_sample_g, 0]]
-                gcn1 = np.array(gcn_pred)[np.array(link_or_unlink)[ind_sample_g, 1]]
-                dense0 = np.array(dense_pred)[np.array(link_or_unlink)[ind_sample_g, 0]]
-                dense1 = np.array(dense_pred)[np.array(link_or_unlink)[ind_sample_g, 1]]
-                feat0 = np.array(feature_arr)[np.array(link_or_unlink)[ind_sample_g, 0]]
-                feat1 = np.array(feature_arr)[np.array(link_or_unlink)[ind_sample_g, 1]]
-                nodes = np.array(link_or_unlink)[ind_sample_g]
-                group = np.ones([len(ind_sample_g), 1]) * g
-                train_test = np.vstack([np.ones([len(ind_sample_g_train), 1]), np.zeros([len(ind_sample_g_test), 1])])
+    for member in range(2):
+        link_or_unlink = link if not member else unlink
+        g_link_or_unlink = g_link if not member else g_unlink
+        ind_link = np.array(range(len(link_or_unlink)))
+        for g in range(3):
+            print("working on group {}-{}".format(g, "member" if not member else "non-member"))
+            ind_current_group = ind_link[np.array(g_link_or_unlink) == g]
+            if len(ind_current_group) < train_len // 3:
+                ind_sample_g_test, ind_sample_g_train = train_test_split(ind_current_group, test_size=0.5)
+                ind_sample_g_test = np.random.choice(ind_sample_g_test, int(train_len // 3))
+                ind_sample_g_train = np.random.choice(ind_sample_g_train, int(train_len // 3))
+            else:
+                ind_sample_g_test, ind_sample_g_train = train_test_split(ind_current_group,
+                                                                         test_size=int(train_len // 3))
+            ind_sample_g = np.concatenate([ind_sample_g_train, ind_sample_g_test])
+            labels = np.ones([len(ind_sample_g), 1]) * (1 - member)
+            gcn0 = np.array(gcn_pred)[np.array(link_or_unlink)[ind_sample_g, 0]]
+            gcn1 = np.array(gcn_pred)[np.array(link_or_unlink)[ind_sample_g, 1]]
+            dense0 = np.array(dense_pred)[np.array(link_or_unlink)[ind_sample_g, 0]]
+            dense1 = np.array(dense_pred)[np.array(link_or_unlink)[ind_sample_g, 1]]
+            feat0 = np.array(feature_arr)[np.array(link_or_unlink)[ind_sample_g, 0]]
+            feat1 = np.array(feature_arr)[np.array(link_or_unlink)[ind_sample_g, 1]]
+            nodes = np.array(link_or_unlink)[ind_sample_g]
+            group = np.ones([len(ind_sample_g), 1]) * g
+            train_test = np.vstack([np.ones([len(ind_sample_g_train), 1]), np.zeros([len(ind_sample_g_test), 1])])
 
-                link_content_list = [labels, gcn0, gcn1, dense0, dense1, feat0, feat1, nodes, group, train_test]
-                content_names = ['label',
-                                 'gcn_pred0',
-                                 'gcn_pred1',
-                                 "dense_pred0",
-                                 "dense_pred1",
-                                 "feature_arr0",
-                                 "feature_arr1",
-                                 "id_node",
-                                 "gender_group",
-                                 "train_test"]
-                if len(df_columns) == 0:
-                    for i in range(len(content_names)):
-                        len_content = link_content_list[i].shape[1]
-                        if len_content > 1:
-                            df_columns += ['{}_{}'.format(content_names[i], x) for x in range(len_content)]
-                        else:
-                            df_columns.append(content_names[i])
-
-                diff = get_diff_v3(link_content_list)
-                print("generated {} training candidates and {} testing candidates".format(np.unique(diff[:, -1], return_counts=True)[1][1],
-                                                                                          np.unique(diff[:, -1], return_counts=True)[1][0]))
-
-                diff_list.append(diff)
-    else:
-        # random sample option:
-        for member in range(2):
-            link_or_unlink = link if not member else unlink
-            g_link_or_unlink = g_link if not member else g_unlink
-            if isinstance(g_link_or_unlink, list):
-                g_link_or_unlink = np.array(g_link_or_unlink).reshape(-1, 1)
-            ind_link = np.array(range(len(link_or_unlink)))
-            # random select 20% member as training set, else testing set
-            print("working on group {}".format("member" if not member else "non-member"))
-            ind_sample_test, ind_sample_train = train_test_split(ind_link, test_size=int(train_len))
-            ind_sample = np.concatenate([ind_sample_train, ind_sample_test])
-            labels = np.ones([len(ind_sample), 1]) * (1 - member)
-            gcn0 = np.array(gcn_pred)[np.array(link_or_unlink)[ind_sample, 0]]
-            gcn1 = np.array(gcn_pred)[np.array(link_or_unlink)[ind_sample, 1]]
-            dense0 = np.array(dense_pred)[np.array(link_or_unlink)[ind_sample, 0]]
-            dense1 = np.array(dense_pred)[np.array(link_or_unlink)[ind_sample, 1]]
-            feat0 = np.array(feature_arr)[np.array(link_or_unlink)[ind_sample, 0]]
-            feat1 = np.array(feature_arr)[np.array(link_or_unlink)[ind_sample, 1]]
-            nodes = np.array(link_or_unlink)[ind_sample]
-            group = g_link_or_unlink[ind_sample]
-            train_test = np.vstack([np.ones([len(ind_sample_train), 1]), np.zeros([len(ind_sample_test), 1])])
             link_content_list = [labels, gcn0, gcn1, dense0, dense1, feat0, feat1, nodes, group, train_test]
             content_names = ['label',
                              'gcn_pred0',
@@ -411,82 +141,22 @@ def generate_train_test_v3(link, unlink, dense_pred, gcn_pred, train_ratio,
                     else:
                         df_columns.append(content_names[i])
 
-            diff = get_diff_v3(link_content_list)
+            diff = get_diff(link_content_list)
             print("generated {} training candidates and {} testing candidates".format(
                 np.unique(diff[:, -1], return_counts=True)[1][1],
                 np.unique(diff[:, -1], return_counts=True)[1][0]))
+
             diff_list.append(diff)
+
     diff_df = np.vstack(diff_list)
     diff_df = pd.DataFrame(diff_df)
-    if fair_sample:
-        diff_file = saving_path + "diff_%s_train_ratio_%0.1f_train_fair.csv" % (dataset, train_ratio)
-    else:
-        diff_file = saving_path + "diff_%s_train_ratio_%0.1f_train.csv" % (dataset, train_ratio)
-
+    diff_file = saving_path + "diff_%s_train_ratio_%0.1f_train_fair.csv" % (dataset, train_ratio)
     if not os.path.exists(saving_path):
         os.makedirs(saving_path)
     diff_df.to_csv(diff_file, index=False, header=False)
 
 
-def get_diff(line_link, member=0, gender=0):
-    similarity_list = [cosine, euclidean, correlation, chebyshev,
-                       braycurtis, canberra, cityblock, sqeuclidean]
-    # Posterior aggregation, used in attack 3 and 6
-    t0 = np.array(line_link["gcn_pred0"])
-    r0 = np.array(line_link["dense_pred0"])
-    f0 = np.array(line_link["feature_arr0"])
-    t1 = np.array(line_link["gcn_pred1"])
-    r1 = np.array(line_link["dense_pred1"])
-    f1 = np.array(line_link["feature_arr1"])
-    post_agg_vec = operator_func("concate_all", np.array(t0), np.array(t1))#16
-
-    # Posterior similarity, posterior entropy similarity, used in all attacks
-    target_similarity = np.array([row(t0, t1) for row in similarity_list]) #8
-    target_metric_vec = get_metrics(t0 - min(t0),
-                                    t1 - min(t1),
-                                    'entropy', operator_func) #4
-
-    # Feature related, reference post similarity, used in attack 5, 6, 7
-    reference_similarity = np.array([row(r0, r1) for row in similarity_list]) # 8
-    feature_similarity = np.array([row(f0, f1) for row in similarity_list]) # 8
-    reference_metric_vec = get_metrics(np.array(r0) - min(r0),
-                                       np.array(r1) - min(r1),
-                                       'entropy', operator_func) # 4
-    return np.concatenate([post_agg_vec,
-                           target_similarity, target_metric_vec,
-                           reference_similarity, feature_similarity, reference_metric_vec, [member, gender]])
-
-
-def get_diff_v2(link_contents, member=0, gender=0):
-    similarity_list = [cosine, euclidean, correlation, chebyshev,
-                       braycurtis, canberra, cityblock, sqeuclidean]
-    # Posterior aggregation, used in attack 3 and 6
-    t0 = np.array(link_contents[1])
-    r0 = np.array(link_contents[3])
-    f0 = np.array(link_contents[5])
-    t1 = np.array(link_contents[2])
-    r1 = np.array(link_contents[4])
-    f1 = np.array(link_contents[6])
-    post_agg_vec = operator_func("concate_all", np.array(t0), np.array(t1))#16
-
-    # Posterior similarity, posterior entropy similarity, used in all attacks
-    target_similarity = np.array([row(t0, t1) for row in similarity_list]) #8
-    target_metric_vec = get_metrics(t0 - min(t0),
-                                    t1 - min(t1),
-                                    'entropy', operator_func) #4
-
-    # Feature related, reference post similarity, used in attack 5, 6, 7
-    reference_similarity = np.array([row(r0, r1) for row in similarity_list]) # 8
-    feature_similarity = np.array([row(f0, f1) for row in similarity_list]) # 8
-    reference_metric_vec = get_metrics(np.array(r0) - min(r0),
-                                       np.array(r1) - min(r1),
-                                       'entropy', operator_func) # 4
-    return np.concatenate([post_agg_vec,
-                           target_similarity, target_metric_vec,
-                           reference_similarity, feature_similarity, reference_metric_vec, [member, gender]])
-
-
-def get_diff_v3(link_contents):
+def get_diff(link_contents):
     similarity_list = [cosine, euclidean, correlation, chebyshev,
                        braycurtis, canberra, cityblock, sqeuclidean]
     # Posterior aggregation, used in attack 3 and 6
@@ -567,7 +237,7 @@ def get_partial(adj, model_type, datapath, partial_path, pred_path, dataset, fai
         else:
             saving_path = partial_path + "partial/t={}/".format(t)
         print("generating: %d percent" % (i * 10), time.time() - t_start)
-        generate_train_test_v3(link, unlink, dense_pred, gat_pred, i / 10.0,
+        generate_train_test(link, unlink, dense_pred, gat_pred, i / 10.0,
                                feature_arr, dataset, saving_path=saving_path,
                                g_link=g_link, g_unlink=g_unlink, fair_sample=fair_sample, topk=top_k)
 
