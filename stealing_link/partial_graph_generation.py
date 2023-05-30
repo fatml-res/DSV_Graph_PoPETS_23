@@ -193,14 +193,13 @@ def get_diff(link_contents):
                       ids, member, gender, train_test])
 
 
-def get_partial(adj, model_type, datapath, partial_path, pred_path, dataset, fair_sample=False, t=0, ptb=False, top_k=-1):
-    _, features, _, _, _, _, _, _ = load_data(datapath, dataset, ptb)
+def get_partial(adj, model_type, datapath, partial_path, pred_path, dataset, t=0):
+    _, features, _, _, _, _, _, _ = load_data(datapath, dataset)
     if isinstance(features, np.ndarray):
         feature_arr = features
     else:
         feature_arr = features.numpy()
     feature_arr = feature_arr.tolist()
-    dataset = dataset.split("_ptb")[0]
 
     dense_pred = pkl.loads(open("dense/" + "%s_dense_pred.pkl" % dataset, "rb").read())
     try:
@@ -231,15 +230,11 @@ def get_partial(adj, model_type, datapath, partial_path, pred_path, dataset, fai
 
     # generate 10% to 100% of known edges
     t_start = time.time()
-    for i in [2]:
-        if top_k > 0:
-            saving_path = partial_path + "partial/t={}/K={}/".format(t, top_k)
-        else:
-            saving_path = partial_path + "partial/t={}/".format(t)
-        print("generating: %d percent" % (i * 10), time.time() - t_start)
-        generate_train_test(link, unlink, dense_pred, gat_pred, i / 10.0,
+    saving_path = partial_path + "partial/t={}/".format(t)
+    print("generating: 20 percent", time.time() - t_start)
+    generate_train_test(link, unlink, dense_pred, gat_pred, 0.2,
                                feature_arr, dataset, saving_path=saving_path,
-                               g_link=g_link, g_unlink=g_unlink, fair_sample=fair_sample, topk=top_k)
+                               g_link=g_link, g_unlink=g_unlink)
 
 
 if __name__ == "__main__":

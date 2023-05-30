@@ -1,8 +1,8 @@
 {
   "facebook": {
     "GAT": {
-      "datapath":"GAT/",
-      "partial_path": "GAT/",
+      "datapath":"dataset/facebook/",
+      "partial_path": "GAT/facebook/",
       "nhid": 8,
       "nheads": 8,
       "lr": 0.004,
@@ -12,8 +12,8 @@
       "dropout": 0.5
     },
     "GCN": {
-      "datapath":"GCN/",
-      "partial_path": "GCN/",
+      "datapath":"dataset/facebook/",
+      "partial_path": "GCN/facebbook/",
       "nhid": 32,
       "lr": 0.001,
       "train": 0.6,
@@ -26,8 +26,8 @@
   },
   "pokec":{
     "GAT": {
-      "datapath":"GAT/",
-      "partial_path": "GAT/",
+      "datapath":"dataset/pokec/",
+      "partial_path": "GAT/pokec/",
       "nhid": 6,
       "nheads": 6,
       "lr": 0.002,
@@ -37,8 +37,8 @@
       "dropout": 0.5
   },
     "GCN": {
-      "datapath":"GCN/",
-      "partial_path": "GCN/",
+      "datapath":"dataset/pokec/",
+      "partial_path": "GCN/pokec/",
       "nhid": 32,
       "lr": 0.001,
       "train": 0.6,

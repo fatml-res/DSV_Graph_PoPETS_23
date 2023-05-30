@@ -47,9 +47,9 @@ def sample_mask(idx, l):
     return np.array(mask, dtype=bool)
 
 
-def load_data(datapath_str, dataset_str, ptb=False):
+def load_data(datapath_str, dataset_str):
     if dataset_str in ["Google+", "facebook", "facebook_ptb", "pokec"] or "tagged" in dataset_str and "graph" not in dataset_str:
-        return load_data_social(datapath_str, dataset_str, ptb)
+        return load_data_social(datapath_str, dataset_str)
     if dataset_str in ["cora", "citeseer", "pubmed"]:
         return load_data_original(datapath_str, dataset_str)
     elif dataset_str in ["AIDS", "COX2", "DHFR", "ENZYMES", "PROTEINS_full"]:
@@ -154,7 +154,7 @@ def load_data_original(datapath_str, dataset_str):
     return adj, features, y_train, y_val, y_test, train_mask, val_mask, test_mask
 
 
-def load_data_social(datapath_str, dataset_str, ptb=False):
+def load_data_social(datapath_str, dataset_str):
     """
     Loads input data from gcn/data/dataset directory
 
@@ -168,12 +168,7 @@ def load_data_social(datapath_str, dataset_str, ptb=False):
     """
     names = ['ft', 'labels']
     objects = []
-    if "_ptb" in dataset_str:
-        # Source = "GAT/CNR/Group/Reduce/Delta=0.2/"
-        Source = datapath_str
-        dataset_str = dataset_str.split("_ptb")[0]
-    else:
-        Source = datapath_str
+    Source = datapath_str
     for i in range(len(names)):
         with open("{}ind.{}.{}".format(Source, dataset_str, names[i]),
                     'rb') as f:
@@ -188,17 +183,7 @@ def load_data_social(datapath_str, dataset_str, ptb=False):
 
     labels = ally
     # load adj
-    if "tagged" in dataset_str:
-        adj = pkl.loads(open("dataset/tagged/ind.{}.adj".format(dataset_str), 'rb').read())
-    elif "pokec" in dataset_str:
-        adj_source = Source.split('/')[0] + '/CNR/Group/Reduce/Delta=0.1/'
-        adj = pkl.loads(open("{}ind.{}.adj".format(adj_source, dataset_str), 'rb').read())
-    else:
-        adj_source = Source.split('/')[0] + '/CNR/Group/Reduce/Delta=0.1/'
-        if 'gcn' in adj_source:
-            adj_source = adj_source.replace('0.1', '0.05')
-        adj = pkl.loads(open("{}ind.{}.adj".format(adj_source, dataset_str), 'rb').read())
-
+    adj = pkl.loads(open("{}ind.{}.adj".format(Source, dataset_str), 'rb').read())
 
     all_id_list = list(range(len(labels)))
     train_ratio = 0.1

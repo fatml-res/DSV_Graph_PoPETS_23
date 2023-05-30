@@ -423,66 +423,39 @@ def map_gplus_job(ft, job_mark, feature_name):
 
 
 def save_attack_res(saving_path, dataset, y_test_label, y_pred_pob,
-                    y_pred_label, id_test, ratio, attack_type='3', fair_sample=False,
+                    y_pred_label, id_test, ratio, attack_type='3',
                     y_train_label=[], y_train_pred=[], id_train=[], g_train=[], g_test=[]):
-    adj_loc = saving_path.split("MIA_res")[0]
-    if "tagged" in dataset:
-        adj_loc = "dataset/tagged"
-    elif "pokec" in dataset:
-        adj_loc = saving_path.split('/')[0] + '/CNR/Group/Reduce/Delta=0.1/'
-    else:
-        adj_loc = saving_path.split('/')[0] + '/CNR/Group/Reduce/Delta=0.1/'
-        if 'gcn' in adj_loc:
-            adj_loc = adj_loc.replace('0.1', '0.05')
-    if "graph" in dataset:
-        dict_loc = '/'.join(saving_path.split('/')[:2]) + '/graph_detail.pkl'
-        with open(dict_loc, 'rb') as f:
-            if sys.version_info > (3, 0):
-                dict_graph = pkl.load(f, encoding='latin1')
-            else:
-                dict_graph = pkl.load(f)
-        adj = dict_graph['adj']
-        gender = -np.ones(len(adj))
-    else:
-
-        with open("{}/ind.{}.{}".format(adj_loc, dataset, 'adj'),
+    adj_loc = "dataset/" + dataset
+    with open("{}/ind.{}.{}".format(adj_loc, dataset, 'adj'),
                   'rb') as f:
-            if sys.version_info > (3, 0):
-                adj = pkl.load(f, encoding='latin1')
-            else:
-                adj = pkl.load(f)
+        if sys.version_info > (3, 0):
+            adj = pkl.load(f, encoding='latin1')
+        else:
+            adj = pkl.load(f)
 
-        with open("{}/ind.{}.{}".format(adj_loc, dataset, 'gender'),
-                  'rb') as f:
-            if sys.version_info > (3, 0):
-                gender = pkl.load(f, encoding='latin1')
-            else:
-                gender = pkl.load(f)
+    with open("{}/ind.{}.{}".format(adj_loc, dataset, 'gender'),
+                'rb') as f:
+        if sys.version_info > (3, 0):
+            gender = pkl.load(f, encoding='latin1')
+        else:
+            gender = pkl.load(f)
 
     all_nodes = np.arange(adj.shape[0])
-    degree = np.array(adj.sum(axis=0).tolist())-1
-    # all_nodes, degree = np.unique(id_test.reshape(-1), return_counts=True)
 
     all_res = np.array([y_test_label, y_pred_pob, y_pred_label]).T
     all_res = np.hstack([all_res, id_test])
-    degree_pair = []
     gender_pair = []
     for row in all_res:
-        node1_degree = int(degree[int(row[3])])
-        node2_degree = int(degree[int(row[4])])
         node1_gender = int(gender[int(row[3])])
         node2_gender = int(gender[int(row[4])])
-        degree_pair.append([node1_degree, node2_degree])
         gender_pair.append([node1_gender, node2_gender])
-    all_res = np.hstack([all_res, degree_pair, gender_pair])
+    all_res = np.hstack([all_res, gender_pair])
     df_all = pd.DataFrame(all_res,
                           columns=["Label",
                                    "Possibility",
                                    "Pred",
                                    "Node1",
                                    "Node2",
-                                   "Node1 Degree",
-                                   "Node2 Degree",
                                    "Node1 Gender",
                                    "Node2 Gender"])
     df_all['label(TP FP)'] = df_all["Label"] + df_all["Pred"] * 2
@@ -491,17 +464,12 @@ def save_attack_res(saving_path, dataset, y_test_label, y_pred_pob,
                             "Pred": int,
                             "Node1": int,
                             "Node2": int,
-                            "Node1 Degree": int,
-                            "Node2 Degree": int,
                             "Node1 Gender": int,
                             "Node2 Gender": int,
                             'label(TP FP)': int})
     if not os.path.exists(saving_path):
         os.makedirs(saving_path)
-    if fair_sample:
-        df_all.to_csv(saving_path + "/{}_{}_fair_attack{}.csv".format(dataset, ratio, attack_type), index=False)
-    else:
-        df_all.to_csv(saving_path + "/{}_{}_attack{}.csv".format(dataset, ratio, attack_type), index=False)
+    df_all.to_csv(saving_path + "/{}_{}_fair_attack{}.csv".format(dataset, ratio, attack_type), index=False)
 
     df_all['Group'] = 0
     if sum(gender) < 0:
@@ -511,12 +479,8 @@ def save_attack_res(saving_path, dataset, y_test_label, y_pred_pob,
         acc_list = [acc_train, 0, 0, 0,
                     acc_test, 0, 0, 0]
         print("Accuracy list for attack{} is {}".format(attack_type, acc_list))
-        if fair_sample:
-            with open(saving_path + '/{}_MIA-acc_fair_attack{}.pkl'.format(dataset, attack_type), 'wb') as f:
-                pkl.dump(acc_list, f)
-        else:
-            with open(saving_path + '/{}_MIA-acc_attack{}.pkl'.format(dataset, attack_type), 'wb') as f:
-                pkl.dump(acc_list, f)
+        with open(saving_path + '/{}_MIA-acc_fair_attack{}.pkl'.format(dataset, attack_type), 'wb') as f:
+            pkl.dump(acc_list, f)
         return [attack_type] + acc_list
     for i in range(len(df_all)):
         min_gender, maj_gender = np.unique(gender, return_counts=True)[0][np.unique(gender, return_counts=True)[1].argsort()]
@@ -576,12 +540,8 @@ def save_attack_res(saving_path, dataset, y_test_label, y_pred_pob,
     acc_list = [acc_train, acc_train1, acc_train2, acc_train0,
                 acc_test, acc_test1, acc_test2, acc_test0]
     print("Accuracy list for attack{} is {}".format(attack_type, acc_list))
-    if fair_sample:
-        with open(saving_path + '/{}_MIAacc_fair_attack{}.pkl'.format(dataset, attack_type), 'wb') as f:
-            pkl.dump(acc_list, f)
-    else:
-        with open(saving_path + '/{}_MIAacc_attack{}.pkl'.format(dataset, attack_type), 'wb') as f:
-            pkl.dump(acc_list, f)
+    with open(saving_path + '/{}_MIAacc_fair_attack{}.pkl'.format(dataset, attack_type), 'wb') as f:
+        pkl.dump(acc_list, f)
     return [attack_type] + acc_list
 
 

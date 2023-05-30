@@ -166,7 +166,7 @@ def load_data(mia_input_path, mia_input_length=-5):
 
 
 def prepare_MIA_inputs(partial_graph_path, dataset, ratio, attack_type):
-    diff_path = partial_graph_path + "diff_%s_train_ratio_%0.1f_train.csv" % (dataset, ratio)
+    diff_path = partial_graph_path + "diff_%s_train_ratio_%0.1f_train_fair.csv" % (dataset, ratio)
     if str(attack_type) == "6":
         mia_input_lenth = -5
     elif dataset == "facebook":
@@ -198,12 +198,9 @@ def prepare_MIA_inputs(partial_graph_path, dataset, ratio, attack_type):
 def attack_main(datapath="GAT/", dataset="facebook", saving_path="GAT/",
                 ratio=0.2, attack_type=3, fair_sample=False, t=0, prepare_new=True, top_k=-1):
     partial_path = saving_path + "partial/t={}/".format(t)
-    x_train, x_test, y_train, y_test, id_train, id_test, g_train, g_test = prepare_MIA_inputs(datapath,
-                                                                                                 partial_path,
-                                                                                                 fair_sample,
+    x_train, x_test, y_train, y_test, id_train, id_test, g_train, g_test = prepare_MIA_inputs(partial_path,
                                                                                                  dataset,
                                                                                                  ratio,
-                                                                                                 t,
                                                                                                  attack_type)
     x_train_shape = x_train.shape[-1]
     model = Sequential()

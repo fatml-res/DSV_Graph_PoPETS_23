@@ -79,7 +79,6 @@ if __name__ == "__main__":
                             dataset=dataset, t=t)
             if not run_attack:
                 continue
-            print("Start Attack {} with {} balanced sample for {} time.".format(at, fair_sample, t))
             a, p, r, roc, acc_list = attack_main(datapath=config["partial_path"],
                                                  dataset=dataset,
                                                  saving_path=partial_path,
