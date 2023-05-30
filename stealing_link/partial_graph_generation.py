@@ -3,12 +3,12 @@ import os
 import numpy as np
 import pandas as pd
 import torch
-from utils import *
+from stealing_link.utils import *
 import pickle as pkl
 import json
 import random
 import time
-from ..attack import operator_func, get_metrics
+from attack import operator_func, get_metrics
 from scipy.spatial.distance import cosine, euclidean, correlation, chebyshev,\
     braycurtis, canberra, cityblock, sqeuclidean
 from sklearn.model_selection import train_test_split
