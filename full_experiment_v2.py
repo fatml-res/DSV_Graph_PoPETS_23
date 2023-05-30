@@ -56,9 +56,9 @@ if __name__ == "__main__":
         partial_path = config["partial_path"]
         attack_res_loc = model_type
     else:
-        target_saving_path = model_type + "/M_IN/gamma={}".format(gamma)
-        partial_path = config["partial_path"] + "M_IN/gamma={}/".format(gamma)
-        attack_res_loc = model_type + "/M_IN/gamma={}".format(gamma)
+        target_saving_path = model_type + "/FairDefense/gamma={}".format(gamma)
+        partial_path = config["partial_path"] + "FairDefense/gamma={}/".format(gamma)
+        attack_res_loc = model_type + "/FairDefense/gamma={}".format(gamma)
 
     for locs in [target_saving_path, partial_path, attack_res_loc]:
         if not os.path.exists(locs):
@@ -78,7 +78,7 @@ if __name__ == "__main__":
             if run_partial and not partial_done:
                 get_partial(adj=adj, model_type=model_type, datapath=config["datapath"], pred_path=target_saving_path,
                             partial_path=partial_path,
-                            dataset=dataset, fair_sample=fair_sample, t=t)
+                            dataset=dataset, t=t)
             if not run_attack:
                 continue
             print("Start Attack {} with {} balanced sample for {} time.".format(at, fair_sample, t))
@@ -87,7 +87,6 @@ if __name__ == "__main__":
                                                  saving_path=partial_path,
                                                  ratio=0.2,
                                                  attack_type=at,
-                                                 fair_sample=fair_sample,
                                                  t=t)
             df_acc.append(acc_list)
             a_all += a
