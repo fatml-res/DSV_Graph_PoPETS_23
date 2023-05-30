@@ -1,3 +1,8 @@
 
 dataset/pokec/ind.pokec.adj
-__pycache__/*
+*/*/*.pyc
+dense/
+GAT/
+GCN/
+__py*/
+

@@ -58,38 +58,42 @@ def run_target(model_type, config, gender, ft, adj, labels,
                     nclass=labels.max().item() + 1,
                     dropout=dropout,
                     nhead=nheads,
-                    Min=FairDefense,
+                    FairDefense=FairDefense,
                     gamma=gamma)
     else:
         model = GCN(nfeat=ft.shape[1],
                     nhid=nhid,
                     nclass=int(labels.max().item() + 1),
                     dropout=dropout,
-                    Min=FairDefense,
+                    FairDefense=FairDefense,
                     gamma=gamma)
 
     def train(epoch):
         adj_copy = adj
-        optimizer = torch.optim.SGD(filter(lambda p: p.requires_grad, model.parameters()), lr=0.7)
-        model.train()
+        optimizer = optim.Adam(model.parameters(),
+                               lr=lr,
+                               weight_decay=5e-4)
         t = time.time()
+        model.train()
         optimizer.zero_grad()
-        loss = model.loss(idx_train, Variable(torch.LongTensor(labels[np.array(idx_train)])))
-        loss.backward()
+        output = model(ft, adj_copy)
+        loss_train = F.nll_loss(output[idx_train], labels[idx_train])
+        loss_train.backward()
         optimizer.step()
-        model.eval()
+        adj_copy = model.adj_ptb
 
-        output = model.forward(np.arange(len(labels)))
-        loss_train = model.loss(idx_train, Variable(torch.LongTensor(labels[np.array(idx_train)])))
+        model.eval()
+        output = model(ft, adj_copy)
+        loss_train = F.nll_loss(output[idx_train], labels[idx_train])
         acc_train = accuracy(output[idx_train], labels[idx_train])
-        loss_val = model.loss(idx_val, Variable(torch.LongTensor(labels[np.array(idx_val)])))
+        loss_val = F.nll_loss(output[idx_val], labels[idx_val])
         acc_val = accuracy(output[idx_val], labels[idx_val])
         print('Epoch: {:04d}'.format(epoch + 1),
-                  'loss_train: {:.4f}'.format(loss_train.data.item()),
-                  'acc_train: {:.4f}'.format(acc_train.data.item()),
-                  'loss_val: {:.4f}'.format(loss_val.data.item()),
-                  'acc_val: {:.4f}'.format(acc_val.data.item()),
-                  'time: {:.4f}s'.format(time.time() - t))
+              'loss_train: {:.4f}'.format(loss_train.data.item()),
+              'acc_train: {:.4f}'.format(acc_train.data.item()),
+              'loss_val: {:.4f}'.format(loss_val.data.item()),
+              'acc_val: {:.4f}'.format(acc_val.data.item()),
+              'time: {:.4f}s'.format(time.time() - t))
         return loss_val.data.item()
 
     loss_values = []

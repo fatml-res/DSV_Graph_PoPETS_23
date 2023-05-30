@@ -1,7 +1,7 @@
 {
   "facebook": {
     "GAT": {
-      "datapath":"GAT/CNR/Group/Reduce/Delta=0.1/",
+      "datapath":"GAT/",
       "partial_path": "GAT/",
       "nhid": 8,
       "nheads": 8,

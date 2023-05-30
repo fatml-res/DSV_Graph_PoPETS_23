@@ -29,15 +29,13 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     model_type = args.model_type  # "GCN"
-    dataset = args.dataset  # "facebook"
-    shadow_dataset = args.shadow_dataset  # "facebook"
+    dataset = args.dataset  # "facebook
     datapath = args.datapath  # "dataset/"
     epoch = args.epoch  # 300
     FairDefense = args.FD
     gamma = args.gamma
 
-    run_dense = args.run_dense  # False
-    fair_sample = args.fair_sample  # False
+    run_dense = args.run_dense    # False
     run_attack = args.run_attack  # False
     run_Target = args.run_Target  # False
     run_partial = args.run_partial  # True
