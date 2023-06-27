@@ -45,9 +45,13 @@ In this case, target model experiment will run with FairDefense. $\gamma$ is set
 #### Overall Attack Performance
 The output of `full_experiment_v2.py` contains a csv file that includes the overall performance of attack model. The result file will be saved as `[model]/[dataset]/[gamma=?]/attack_res.csv`.
 
-#### Subgroup Attack Performance
-The output of `full_experiment_v2.py` contains a csv file that includes the subgroup performance of attack model. The result file will be saved as `[model]/[dataset]/[gamma=?]/attack_subgroups.csv`.
+#### Subgroup Attack Performance and DSV
+The output of `full_experiment_v2.py` contains a csv file that includes the subgroup performance of attack model and the averaged DSV. The result file will be saved as `[model]/[dataset]/[gamma=?]/attack_subgroups.csv`.
 
+#### Performance of FairDefense
+With FairDefense applied, the Attack performance should be smaller than the result withouut FairDefense.
+
+With FairDefense applied, the DSV should be smaller than the result withouut FairDefense.
 
 ## Contributions and Reference
 ### Contribution

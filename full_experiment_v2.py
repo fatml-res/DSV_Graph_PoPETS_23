@@ -107,4 +107,7 @@ if __name__ == "__main__":
     df_res.to_csv(attack_res_loc + f"{dataset}/attack_res.csv", index=False)
     df_acc = pd.DataFrame(df_acc, columns=['ACC_train_all', 'ACC_train_0', 'ACC_train_1', 'ACC_train_2',
                                            'ACC_test_all', 'ACC_test_0', 'ACC_test_1', 'ACC_test_2'])
+    df_acc['DSV'] = ((df_acc['ACC_test_0'] - df_acc['ACC_test_1']).abs() +\
+                    (df_acc['ACC_test_1'] - df_acc['ACC_test_2']).abs() +\
+                    (df_acc['ACC_test_0'] - df_acc['ACC_test_2']).abs())/3
     df_acc.to_csv(df_acc + f"{dataset}/attack_subgroups.csv", index=False)
