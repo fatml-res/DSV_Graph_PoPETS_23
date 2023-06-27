@@ -3,7 +3,11 @@ This is the repo for Paper "Disparate Vulnerability in Link Inference Attacks ag
 In the paper, we introduce a new defense mechanism called FairDefense to address disparities in subgroup vulnerability (DSV) while providing protection against Link-level Membership Inference Attacks (LMIA). The repository's code includes implementations of the Graph Attention Network (GAT) and Graph Convolutional Network (GCN) models integrated with FairDefense.
 
 ## Development Environment
-This repo uses Python 3.7.7. The packages used in this repo are listed in `requirements.txt`. To install the packages, run `pip3 install -r requirements.txt`.
+This repo uses Python 3.7. The packages used in this repo are listed in `requirements.txt`. To install the packages, run `pip3 install -r requirements.txt`.
+
+The following system requirements must be met in order to run the code:
+- Linux operating system or windows operating system
+- x86_64 architecture
 
 ## Repo Instruction
 ### full_experient_v2.py
@@ -36,6 +40,14 @@ In this case, target model experiment will be skipped.\
 #### Use case 3: run experiment with FairDefense:
 In this case, target model experiment will run with FairDefense. $\gamma$ is set as 0.1\
 `python3 full_experiment_v2.py --model_type GCN --dataset facebook --epoch 100 --runTarget --run_partial --run_attack --Min --gamma 0.1`
+
+### Expected output
+#### Overall Attack Performance
+The output of `full_experiment_v2.py` contains a csv file that includes the overall performance of attack model. The result file will be saved as `[model]/[dataset]/[gamma=?]/attack_res.csv`.
+
+#### Subgroup Attack Performance
+The output of `full_experiment_v2.py` contains a csv file that includes the subgroup performance of attack model. The result file will be saved as `[model]/[dataset]/[gamma=?]/attack_subgroups.csv`.
+
 
 ## Contributions and Reference
 ### Contribution

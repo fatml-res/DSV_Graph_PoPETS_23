@@ -103,3 +103,8 @@ if __name__ == "__main__":
                                r_all / (t + 1),
                                roc_all / (t + 1)))
         agg_all.append([at, a_all / (t + 1), p_all / (t + 1), r_all / (t + 1), roc_all / (t + 1)])
+    df_res = pd.DataFrame(agg_all, columns=['Attack', 'Accuracy', 'Precision', 'Recall', 'ROC'])
+    df_res.to_csv(attack_res_loc + f"{dataset}/attack_res.csv", index=False)
+    df_acc = pd.DataFrame(df_acc, columns=['ACC_train_all', 'ACC_train_0', 'ACC_train_1', 'ACC_train_2',
+                                           'ACC_test_all', 'ACC_test_0', 'ACC_test_1', 'ACC_test_2'])
+    df_acc.to_csv(df_acc + f"{dataset}/attack_subgroups.csv", index=False)
