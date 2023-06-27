@@ -1,6 +1,10 @@
 # Disparate Vulnerability in Link Inference Attacks against Graph Neural Networks
 This is the repo for Paper "Disparate Vulnerability in Link Inference Attacks against Graph Neural Networks'.
 In the paper, we introduce a new defense mechanism called FairDefense to address disparities in subgroup vulnerability (DSV) while providing protection against Link-level Membership Inference Attacks (LMIA). The repository's code includes implementations of the Graph Attention Network (GAT) and Graph Convolutional Network (GCN) models integrated with FairDefense.
+
+## Development Environment
+This repo uses Python 3.7.7. The packages used in this repo are listed in `requirements.txt`. To install the packages, run `pip3 install -r requirements.txt`.
+
 ## Repo Instruction
 ### full_experient_v2.py
 This file is used to run target model experiment and attack model experiment. In particular, the parameters are listed as:
