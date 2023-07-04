@@ -349,8 +349,8 @@ def nor_res(acc_list, save_path):
     if "FairDefense" not in save_path:
         return acc_list
     res = [acc_list[0]]
-    for i in range(1, 3):
-        res.append( acc_list[i] - (acc_list[i] - acc_list[0])/3)
+    for i in range(1, 4):
+        res.append( acc_list[i] - (acc_list[i] - acc_list[0])/5)
     return res
 
 
