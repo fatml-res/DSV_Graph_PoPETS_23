@@ -504,49 +504,36 @@ def save_attack_res(saving_path, dataset, y_test_label, y_pred_pob,
     acc_test1 = df_all.loc[1]['T'].mean()
     acc_test2 = df_all.loc[2]['T'].mean()
     acc_test, acc_test0, acc_test1, acc_test2 = nor_res([acc_test, acc_test0, acc_test1, acc_test2], saving_path)
-    if attack_type in [1, 5]:
-        acc_train = (np.array(y_train_label) == y_train_pred).mean()
-        acc_train1 = 0
-        acc_train2 = 0
-        acc_train0 = 0
-    elif attack_type not in [3, 6]:
-        tmp_acc = [(np.array(y_train_label) == y_train_pred).mean()]
-        for gi in [1, 2, 0]:
-            ind_gi_train = g_train == gi
-            acc_gi = (np.array(y_train_label)[ind_gi_train] == np.array(y_train_pred)[ind_gi_train]).mean()
-            tmp_acc.append(acc_gi)
 
-        acc_train, acc_train1, acc_train2, acc_train0 = tmp_acc
-    else:
-        train_res = np.array([y_train_label, y_train_pred]).T
-        train_res = np.hstack([train_res, id_train])
-        gender_pair = []
-        for row in train_res:
-            node1_gender = int(gender[int(row[2])])
-            node2_gender = int(gender[int(row[3])])
-            gender_pair.append([node1_gender, node2_gender])
+    train_res = np.array([y_train_label, y_train_pred]).T
+    train_res = np.hstack([train_res, id_train])
+    gender_pair = []
+    for row in train_res:
+        node1_gender = int(gender[int(row[2])])
+        node2_gender = int(gender[int(row[3])])
+        gender_pair.append([node1_gender, node2_gender])
 
-        train_res = np.hstack([train_res, gender_pair])
-        df_train = pd.DataFrame(train_res,
+    train_res = np.hstack([train_res, gender_pair])
+    df_train = pd.DataFrame(train_res,
                                 columns=["Label",
                                          "Pred",
                                          "Node1",
                                          "Node2",
                                          "Node1 Gender",
                                          "Node2 Gender"])
-        df_train['Group'] = 0
-        for i in range(len(df_train)):
-            min_gender, maj_gender = np.unique(gender, return_counts=True)[0][np.unique(gender, return_counts=True)[1].argsort()]
-            if df_train.loc[i, 'Node1 Gender'] == min_gender and df_train.loc[i, 'Node2 Gender'] == min_gender:
-                df_train.loc[i, 'Group'] = 1
-            if df_train.loc[i, 'Node1 Gender'] == maj_gender and df_train.loc[i, 'Node2 Gender'] == maj_gender:
-                df_train.loc[i, 'Group'] = 2
-        df_train['T'] = df_train['Label'] == df_train['Pred']
-        df_train = df_train.set_index('Group')
-        acc_train = df_train['T'].mean()
-        acc_train0 = df_train.loc[0]['T'].mean()
-        acc_train1 = df_train.loc[1]['T'].mean()
-        acc_train2 = df_train.loc[2]['T'].mean()
+    df_train['Group'] = 0
+    for i in range(len(df_train)):
+        min_gender, maj_gender = np.unique(gender, return_counts=True)[0][np.unique(gender, return_counts=True)[1].argsort()]
+        if df_train.loc[i, 'Node1 Gender'] == min_gender and df_train.loc[i, 'Node2 Gender'] == min_gender:
+            df_train.loc[i, 'Group'] = 1
+        if df_train.loc[i, 'Node1 Gender'] == maj_gender and df_train.loc[i, 'Node2 Gender'] == maj_gender:
+            df_train.loc[i, 'Group'] = 2
+    df_train['T'] = df_train['Label'] == df_train['Pred']
+    df_train = df_train.set_index('Group')
+    acc_train = df_train['T'].mean()
+    acc_train0 = df_train.loc[0]['T'].mean()
+    acc_train1 = df_train.loc[1]['T'].mean()
+    acc_train2 = df_train.loc[2]['T'].mean()
     acc_list = [acc_train, acc_train1, acc_train2, acc_train0,
                 acc_test, acc_test1, acc_test2, acc_test0]
     print("Accuracy list for attack{} is {}".format(attack_type, acc_list))

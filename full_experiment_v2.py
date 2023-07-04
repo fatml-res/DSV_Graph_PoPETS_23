@@ -87,8 +87,7 @@ if __name__ == "__main__":
                             dataset=dataset, t=t)
             if not run_attack:
                 continue
-            a, p, r, roc, acc_list = attack_main(datapath=config["partial_path"],
-                                                 dataset=dataset,
+            a, p, r, roc, acc_list = attack_main(dataset=dataset,
                                                  saving_path=partial_path,
                                                  ratio=0.2,
                                                  attack_type=at,
