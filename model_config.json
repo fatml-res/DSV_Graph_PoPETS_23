@@ -13,7 +13,7 @@
     },
     "GCN": {
       "datapath":"dataset/facebook/",
-      "partial_path": "GCN/facebbook/",
+      "partial_path": "GCN/facebook/",
       "nhid": 32,
       "lr": 0.001,
       "train": 0.6,

@@ -25,13 +25,16 @@ This file is used to run target model experiment and attack model experiment. In
 | run_Target  | N/A              | `--run_Target` will triger target model training                                |
 | run_partial | N/A              | `--run_partial` will triger MIA training/testing preparation                    |
 | run_Attack  | N/A              | `--run_attack` will triger attack model training and testing                    |
-
+| use_cpu     | N/A              | `--use_cpu` will triger the code to run on cpu                                  |
 Running `full_experient_v2.py` will launch experiment with completed or selected steps.
 
 ### Use case for experiment
+#### CPU usage
+If gpu is not available, please add `--use_cpu` to the command line. so that the code will run on cpu.
+
 #### Use case 1: run completed experiment without defense:
 In this case, experiment with no defense mechanism will be finished.\
-`python3 full_experiment_v2.py --model_type GCN --dataset facebook --epoch 100 --run_dense --runTarget --run_partial --run_attack`
+`python3 full_experiment_v2.py --model_type GCN --dataset facebook --epoch 100 --run_dense --run_Target --run_partial --run_attack`
 
 #### Use case 2: run attack experiment when target model experiment has been finished:
 In this case, target model experiment will be skipped.\
@@ -39,7 +42,7 @@ In this case, target model experiment will be skipped.\
 
 #### Use case 3: run experiment with FairDefense:
 In this case, target model experiment will run with FairDefense. $\gamma$ is set as 0.1\
-`python3 full_experiment_v2.py --model_type GCN --dataset facebook --epoch 100 --runTarget --run_partial --run_attack --Min --gamma 0.1`
+`python3 full_experiment_v2.py --model_type GCN --dataset facebook --epoch 100 --run_Target --run_partial --run_attack --FD --gamma 0.1`
 
 ### Expected output
 #### Overall Attack Performance
@@ -51,7 +54,11 @@ The output of `full_experiment_v2.py` contains a csv file that includes the subg
 #### Performance of FairDefense
 With FairDefense applied, the Attack performance should be smaller than the result withouut FairDefense.
 
-With FairDefense applied, the DSV should be smaller than the result withouut FairDefense.
+With FairDefense applied, the DSV should be smaller than the result withouut FairDefense. This information will be print out when the experiment is run with FairDefense:
+    
+    ``` 
+    DSV: 0.000000
+    ```
 
 ## Contributions and Reference
 ### Contribution

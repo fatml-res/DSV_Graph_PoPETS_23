@@ -195,8 +195,8 @@ def prepare_MIA_inputs(partial_graph_path, dataset, ratio, attack_type):
     return x_train, x_test, y_train, y_test, id_train, id_test, g_train, g_test
 
 
-def attack_main(datapath="GAT/", dataset="facebook", saving_path="GAT/",
-                ratio=0.2, attack_type=3, fair_sample=False, t=0, prepare_new=True, top_k=-1):
+def attack_main(dataset="facebook", saving_path="GAT/",
+                ratio=0.2, attack_type=3, t=0):
     partial_path = saving_path + "partial/t={}/".format(t)
     x_train, x_test, y_train, y_test, id_train, id_test, g_train, g_test = prepare_MIA_inputs(partial_path,
                                                                                                  dataset,

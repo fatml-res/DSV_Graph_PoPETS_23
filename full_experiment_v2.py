@@ -1,5 +1,7 @@
 import os
 
+import pandas as pd
+
 from GCN_dense import train_model
 from utils import *
 from stealing_link.partial_graph_generation import get_partial
@@ -26,6 +28,8 @@ if __name__ == "__main__":
                         help='True if Target experiment is required.')
     parser.add_argument('--run_partial', action="store_true", default=False,
                         help='True if new partial data is required.')
+    parser.add_argument('--use_cpu', action="store_true", default=False,
+                        help='True if experiment is run on cpu')
     args = parser.parse_args()
 
     model_type = args.model_type  # "GCN"
@@ -39,6 +43,10 @@ if __name__ == "__main__":
     run_attack = args.run_attack  # False
     run_Target = args.run_Target  # False
     run_partial = args.run_partial  # True
+
+    if args.use_cpu:
+        os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+        print("Using CPU")
 
     with open('model_config.json', 'r') as f:
         config = json.load(f)[dataset][model_type]
@@ -91,23 +99,19 @@ if __name__ == "__main__":
             r_all += r
             roc_all += roc
         partial_done = True
-        print("Average Performance of attack {} on model {} over {} time:\n" \
-              " Accuracy = {},\n"
-              " Precision={},\n"
-              " Recall = {},\n"
-              " ROC={}".format(at,
-                               model_type,
-                               t + 1,
-                               a_all / (t + 1),
-                               p_all / (t + 1),
-                               r_all / (t + 1),
-                               roc_all / (t + 1)))
         agg_all.append([at, a_all / (t + 1), p_all / (t + 1), r_all / (t + 1), roc_all / (t + 1)])
     df_res = pd.DataFrame(agg_all, columns=['Attack', 'Accuracy', 'Precision', 'Recall', 'ROC'])
-    df_res.to_csv(attack_res_loc + f"{dataset}/attack_res.csv", index=False)
-    df_acc = pd.DataFrame(df_acc, columns=['ACC_train_all', 'ACC_train_0', 'ACC_train_1', 'ACC_train_2',
+    if not os.path.exists(attack_res_loc + f"/{dataset}"):
+        os.makedirs(attack_res_loc + f"/{dataset}")
+    df_res.to_csv(attack_res_loc + f"/{dataset}/attack_res.csv", index=False)
+    df_acc = pd.DataFrame(df_acc, columns=['Attack Type', 'ACC_train_all', 'ACC_train_0', 'ACC_train_1', 'ACC_train_2',
                                            'ACC_test_all', 'ACC_test_0', 'ACC_test_1', 'ACC_test_2'])
     df_acc['DSV'] = ((df_acc['ACC_test_0'] - df_acc['ACC_test_1']).abs() +\
                     (df_acc['ACC_test_1'] - df_acc['ACC_test_2']).abs() +\
-                    (df_acc['ACC_test_0'] - df_acc['ACC_test_2']).abs())/3
-    df_acc.to_csv(df_acc + f"{dataset}/attack_subgroups.csv", index=False)
+                    (df_acc['ACC_test_0'] - df_acc['ACC_test_2']).abs())
+    df_acc = df_acc.groupby('Attack Type').mean().reset_index()
+    df_acc.to_csv(attack_res_loc + f"/{dataset}/attack_subgroups.csv", index=False)
+    if os.path.exists(f"{model_type}/{dataset}/attack_subgroups.csv"):
+        df_ori = pd.read_csv(f"{model_type}/{dataset}/attack_subgroups.csv")
+        df_acc = pd.merge(df_acc, df_ori[['Attack Type', 'DSV']], on='Attack Type', suffixes=('_new', '_ori'))
+        print(f"DSV of {model_type} is changed from {df_acc['DSV_ori'].values[0]} to {df_acc['DSV_new'].values[0]}")

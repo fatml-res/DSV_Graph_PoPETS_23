@@ -21,14 +21,14 @@ class GCN(nn.Module):
         self.fix_adj = None
 
         if gamma == torch.inf:
-            self.Ptb = False
+            self.FairDefense = False
         else:
             print("Model will go with FairDefense\nGamma={}\n".format(gamma))
             self.FairDefense = FairDefense
 
     def forward(self, x, adj):
         adj_copy = adj.clone()
-        if self.Ptb:
+        if self.FairDefense:
             adj_copy = self.ptb_adj(adj)
 
         self.adj_ptb = adj_copy
