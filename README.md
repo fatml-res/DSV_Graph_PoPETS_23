@@ -55,10 +55,8 @@ The output of `full_experiment_v2.py` contains a csv file that includes the subg
 With FairDefense applied, the Attack performance should be smaller than the result withouut FairDefense.
 
 With FairDefense applied, the DSV should be smaller than the result withouut FairDefense. This information will be print out when the experiment is run with FairDefense:
-    
-    ``` 
-    DSV of GCN is changed from 0.064595367625992 to 0.03606620882052991
-    ```
+
+```DSV of GCN is changed from 0.064595367625992 to 0.03606620882052991```
 
 ## Contributions and Reference
 ### Contribution
