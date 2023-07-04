@@ -57,7 +57,7 @@ With FairDefense applied, the Attack performance should be smaller than the resu
 With FairDefense applied, the DSV should be smaller than the result withouut FairDefense. This information will be print out when the experiment is run with FairDefense:
     
     ``` 
-    DSV: 0.000000
+    DSV of GCN is changed from 0.064595367625992 to 0.03606620882052991
     ```
 
 ## Contributions and Reference
