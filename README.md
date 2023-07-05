@@ -1,5 +1,6 @@
 # Disparate Vulnerability in Link Inference Attacks against Graph Neural Networks
-This is the repo for Paper "Disparate Vulnerability in Link Inference Attacks against Graph Neural Networks'.
+This is the repo for Paper "Disparate Vulnerability in Link Inference Attacks against Graph Neural Networks' accepted by The 23rd Privacy Enhancing Technologies Symposium (PETS) 2023.
+
 In the paper, we introduce a new defense mechanism called FairDefense to address disparities in subgroup vulnerability (DSV) while providing protection against Link-level Membership Inference Attacks (LMIA). The repository's code includes implementations of the Graph Attention Network (GAT) and Graph Convolutional Network (GCN) models integrated with FairDefense.
 
 ## Development Environment
